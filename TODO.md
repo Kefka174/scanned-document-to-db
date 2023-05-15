@@ -1,9 +1,10 @@
 # Image Recogniton:
 - [ ] Load and display image
-    - [ ] Rotate image
-    - [ ] Crop image
+  - [ ] Select file in explorer
+- [ ] Rotate image
+- [ ] Crop image
 - [ ] Scan Mode
-  - [ ] Drag select portion of image to scan
+  - [ ] Drag-select portion of image to scan
 - [ ] Select Mode
   - [ ] Convert text in selection box to strings
   - [ ] Highlight converted strings in image
