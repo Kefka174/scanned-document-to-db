@@ -1,8 +1,9 @@
 # Image Recogniton:
-- [ ] Load and display image
+- [x] Load and display image
   - [ ] Select file in explorer
-- [ ] Rotate image
-- [ ] Crop image
+- [x] Rotate image
+- [x] Zoom in on image
+  - [ ] Move view while zoomed
 - [ ] Scan Mode
   - [ ] Drag-select portion of image to scan
 - [ ] Select Mode
