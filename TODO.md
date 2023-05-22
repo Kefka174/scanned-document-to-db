@@ -3,7 +3,9 @@
   - [ ] Select file in explorer
 - [x] Rotate image
 - [x] Zoom in on image
-  - [ ] Move view while zoomed
+  - [ ] Focus zoom on cursor
+- [x] Pan view
+  - [ ] Limit pan to image borders
 - [ ] Scan Mode
   - [ ] Drag-select portion of image to scan
 - [ ] Select Mode

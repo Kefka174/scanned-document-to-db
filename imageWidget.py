@@ -8,38 +8,49 @@ class ImageWidget(QWidget):
         super().__init__()
         self.setMinimumSize(1200, 800)
         self.setLayout(QVBoxLayout())
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
 
         self.pixmap = QPixmap(filePath)
         self.zoomDegree = 100
-        self.startDrag, self.endDrag = QPoint(), QPoint()
+        self.mode = "view" # view, select
+        self.startSelect, self.endSelect, self.viewCenter, self.oldViewCenter = QPoint(), QPoint(), QPoint(), QPoint()
 
     def paintEvent(self, event):
         painter = QPainter(self)
         self.displayPixmap = self.pixmap.scaled(self.size() * (100 / self.zoomDegree), Qt.KeepAspectRatio)
         centeredRect = self.displayPixmap.rect()
-        centeredRect.moveCenter(self.rect().center())
+        centeredRect.moveCenter(self.rect().center() + self.viewCenter)
         painter.drawPixmap(centeredRect.topLeft(), self.displayPixmap)
 
-        if not self.startDrag.isNull() and not self.endDrag.isNull():
-            rect = QRect(self.startDrag, self.endDrag)
-            painter.drawRect(rect.normalized())
+        if self.startSelect != self.endSelect:
+            rect = QRect(self.startSelect, self.endSelect)
+            if self.mode == "select": painter.drawRect(rect.normalized())
+            elif self.mode == "view": 
+                self.viewCenter = self.oldViewCenter + QPoint(rect.width(), rect.height())
+
 
     def mousePressEvent(self, event):
         if event.buttons() & Qt.LeftButton:
-            self.startDrag = event.pos()
-            self.endDrag = self.startDrag
+            self.startSelect = event.pos()
+            self.endSelect = self.startSelect
+
+            if self.mode == "view": QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
             self.update()
 
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton:	
-            self.endDrag = event.pos()
+        if event.buttons() & Qt.LeftButton:
+            self.endSelect = event.pos()
             self.update()
 
     def mouseReleaseEvent(self, event):
-        if event.button() & Qt.LeftButton:
-            selectionRect = QRect(self.startDrag, self.endDrag).normalized()
+        if event.button() == Qt.LeftButton:
+            selectionRect = QRect(self.startSelect, self.endSelect).normalized()
 
-            self.startDrag, self.endDrag = QPoint(), QPoint()
+            QApplication.restoreOverrideCursor()
+            self.mode = "view"
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            self.oldViewCenter = self.viewCenter
+            self.startSelect, self.endSelect = QPoint(), QPoint()
             self.update()
 
     def wheelEvent(self, event):
@@ -50,6 +61,12 @@ class ImageWidget(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_R: self.rotateImage()
+        elif event.key() == Qt.Key_V: 
+            self.mode = "view"
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        elif event.key() == Qt.Key_S: 
+            self.mode = "select"
+            self.setCursor(Qt.CursorShape.CrossCursor)
     
     def rotateImage(self):
         transform = QTransform().rotate(90)
