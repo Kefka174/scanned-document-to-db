@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtCore import Qt, QPoint, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QTransform
 import sys
@@ -6,10 +6,7 @@ import sys
 class ImageWidget(QWidget):
     def __init__(self, filePath):
         super().__init__()
-        self.setMinimumSize(1200, 800)
-        self.setLayout(QVBoxLayout())
         self.setCursor(Qt.CursorShape.OpenHandCursor)
-
         self.pixmap = QPixmap(filePath)
         self.zoomDegree = 100
         self.mode = "view" # view, select
@@ -27,7 +24,6 @@ class ImageWidget(QWidget):
             if self.mode == "select": painter.drawRect(rect.normalized())
             elif self.mode == "view": 
                 self.viewCenter = self.oldViewCenter + QPoint(rect.width(), rect.height())
-
 
     def mousePressEvent(self, event):
         if event.buttons() & Qt.LeftButton:

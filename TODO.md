@@ -15,11 +15,11 @@
 
 # Database:
 - [ ] Set up database (external)
-- [ ] GUI panel to manage schema
+- [x] GUI panel to manage schema
   - [ ] Dynamically generate table widgets
     - [ ] Order based on foreign keys
-  - [ ] Dynamically generate feild widgets
-- [ ] Clear table, not clear all tables
+  - [x] Dynamically generate feild widgets
+- [x] Clear table, not clear all tables
 - [ ] Create schema
   - [ ] Make table
   - [ ] Add fields
