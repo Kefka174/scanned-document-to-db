@@ -1,12 +1,12 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGroupBox, QFormLayout, QLineEdit
+from PyQt5.QtWidgets import QApplication, QFormLayout, QWidget, QGroupBox, QLabel, QPushButton, QLineEdit
 import sys
 
 class TableWidget(QWidget):
     def __init__(self, table, fields):
         super().__init__()
-        self.table = QGroupBox(table, self)
+        groupBox = QGroupBox(table, self)
         tableLayout = QFormLayout(self)
-        self.table.setLayout(tableLayout)
+        groupBox.setLayout(tableLayout)
         self.fields = []
 
         for field in fields:
@@ -15,11 +15,11 @@ class TableWidget(QWidget):
             self.fields.append(fieldLineEdit)
             tableLayout.addRow(QLabel(field + ':'), fieldLineEdit)
 
-        self.clearButton = QPushButton("Clear")
-        self.clearButton.clicked.connect(self.clearFields)
-        tableLayout.addWidget(self.clearButton)
+        clearButton = QPushButton("Clear")
+        clearButton.clicked.connect(self.clearFields)
+        tableLayout.addWidget(clearButton)
 
-        self.setMinimumSize(self.table.sizeHint())
+        self.setMinimumSize(groupBox.sizeHint())
 
     def clearFields(self):
         for fieldLineEdit in self.fields:

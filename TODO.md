@@ -19,6 +19,7 @@
   - [ ] Dynamically generate table widgets
     - [ ] Order based on foreign keys
   - [x] Dynamically generate feild widgets
+  - [ ] Dock panel to top or bottom of main window
 - [x] Clear table, not clear all tables
 - [ ] Create schema
   - [ ] Make table
