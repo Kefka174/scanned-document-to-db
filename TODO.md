@@ -6,12 +6,11 @@
   - [ ] Focus zoom on cursor
 - [x] Pan view
   - [ ] Limit pan to image borders
-- [ ] Scan Mode
-  - [ ] Drag-select portion of image to scan
-- [ ] Select Mode
-  - [ ] Convert text in selection box to strings
+- [x] Scan Mode
+  - [x] Drag-select portion of image to scan
+  - [x] Convert text in selection box to strings
   - [ ] Highlight converted strings in image
-  - [ ] Double click contour to break down further
+  - [ ] Maintain highlights through panning, zooming, rotating
 
 # Database:
 - [ ] Set up database (external)
