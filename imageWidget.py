@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtCore import Qt, QPoint, QRect
-from PyQt5.QtGui import QPixmap, QPainter, QTransform
+from PyQt5.QtGui import QPixmap, QPainter, QTransform, QPen, QColor
 import pytesseract
 import cv2
 import sys
@@ -22,11 +22,9 @@ class ImageWidget(QWidget):
 
         rotateButton = QPushButton("Rotate", self)
         rotateButton.clicked.connect(self.rotateImage)
-        rotateButton.setCursor(Qt.CursorShape.ArrowCursor)
         rotateButton.setGeometry(self.rect().center().x() - (rotateButton.width() // 2), 10, 75, 40)
         modeButton = QPushButton("Scan", self)
         modeButton.clicked.connect(self.setModeScan)
-        modeButton.setCursor(Qt.CursorShape.ArrowCursor)
         modeButton.setGeometry(self.rect().center().x() + (modeButton.width() // 2), 10, 75, 40)
 
     def cvInit(self):
@@ -43,20 +41,20 @@ class ImageWidget(QWidget):
         painter.drawPixmap(centeredRect.topLeft(), self.displayPixmap)
 
         if self.startSelect != self.endSelect:
-            rect = QRect(self.startSelect, self.endSelect)
-            if self.mode == "scan": painter.drawRect(rect.normalized())
+            if self.mode == "scan": painter.drawRect(QRect(self.startSelect, self.endSelect).normalized())
             elif self.mode == "panview": 
-                self.viewCenter = self.oldViewCenter + QPoint(rect.width(), rect.height())
+                self.viewCenter = self.oldViewCenter + QPoint(self.endSelect - self.startSelect)
         if self.contours:
-            for rect, text in self.contours:
-                painter.drawRect(rect)
+            for contourRect, text in self.contours:
+                painter.setPen(QPen(QColor("lightgreen"), 3))
+                painter.drawRect(contourRect)
 
     def mousePressEvent(self, event):
         if event.buttons() & Qt.LeftButton:
             self.startSelect = event.pos()
             self.endSelect = self.startSelect
 
-            if self.mode == "panview": QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
+            if self.mode == "panview": QApplication.setOverrideCursor(Qt.CursorShape.SizeAllCursor)
             self.update()
 
     def mouseMoveEvent(self, event):
@@ -69,11 +67,12 @@ class ImageWidget(QWidget):
             if self.mode == "scan":
                 displayRect = QRect(self.startSelect, self.endSelect).normalized()
                 self.scan(displayRect)
+            if self.mode == "panview":
+                QApplication.restoreOverrideCursor()
+                self.oldViewCenter = self.viewCenter
 
-            QApplication.restoreOverrideCursor()
-            self.setModePanView()
-            self.oldViewCenter = self.viewCenter
             self.startSelect, self.endSelect = QPoint(), QPoint()
+            self.setModePanView()
             self.update()
 
     def wheelEvent(self, event):
@@ -95,15 +94,13 @@ class ImageWidget(QWidget):
 
     def setModePanView(self):
         self.mode = "panview"
-        self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def displayRectToImageRect(self, displayRect):
-        imageRect = displayRect
-
+        imageRect = QRect(displayRect)
         # descale
         imageRect.setHeight(int(imageRect.height() * self.pixmap.height() / self.displayPixmap.height()))
         imageRect.setWidth(int(imageRect.width() * self.pixmap.width() / self.displayPixmap.width()))
-
         # de-center
         displayRectDistanceToCenterHeight = displayRect.top() - (self.rect().center().y() + self.viewCenter.y())
         imageRectDistanceToCenterHeight = displayRectDistanceToCenterHeight * self.pixmap.height() / self.displayPixmap.height()
@@ -112,21 +109,34 @@ class ImageWidget(QWidget):
         displayRectDistanceToCenterWidth = displayRect.left() - (self.rect().center().x() + self.viewCenter.x())
         imageRectDistanceToCenterWidth = displayRectDistanceToCenterWidth * self.pixmap.width() / self.displayPixmap.width()
         imageRect.moveLeft(int(self.pixmap.rect().center().x() + imageRectDistanceToCenterWidth))
-
         # cut off out-of-bounds part of rect
         if imageRect.left() < 0: imageRect.setLeft(0)
-        if imageRect.right() > self.pixmap.width(): imageRect.setRight(self.pixmap.width())
         if imageRect.top() < 0: imageRect.setTop(0)
         if imageRect.bottom() > self.pixmap.height(): imageRect.setBottom(self.pixmap.height())
-
+        if imageRect.right() > self.pixmap.width(): imageRect.setRight(self.pixmap.width())
         return imageRect
+    
+    def imageRectToDisplayRect(self, imageRect):
+        displayRect = QRect(imageRect)
+        # scale
+        displayRect.setHeight(int(displayRect.height() * self.displayPixmap.height() / self.pixmap.height()))
+        displayRect.setWidth(int(displayRect.width() * self.displayPixmap.width() / self.pixmap.width()))
+        # re-center
+        imageRectDistanceToCenterHeight = imageRect.top() - self.pixmap.rect().center().y()
+        displayRectDistanceToCenterHeight = imageRectDistanceToCenterHeight * self.displayPixmap.height() / self.pixmap.height()
+        displayRect.moveTop(int(self.rect().center().y() + self.viewCenter.y() + displayRectDistanceToCenterHeight))
 
+        imageRectDistanceToCenterWidth = imageRect.left() - self.pixmap.rect().center().x()
+        displayRectDistanceToCenterWidth = imageRectDistanceToCenterWidth * self.displayPixmap.width() / self.pixmap.width()
+        displayRect.moveLeft(int(self.rect().center().x() + self.viewCenter.x() + displayRectDistanceToCenterWidth))
+        return displayRect
 
     def scan(self, displayRect):
         imageRect = self.displayRectToImageRect(displayRect)
         scanDilatedImage = self.cvDilated[imageRect.y():imageRect.y() + imageRect.height(), imageRect.x():imageRect.x() + imageRect.width()]
         scanImage = self.cvOriginal[imageRect.y():imageRect.y() + imageRect.height(), imageRect.x():imageRect.x() + imageRect.width()]
         contours, hierarchy = cv2.findContours(scanDilatedImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
             # convert contour to text
@@ -134,11 +144,9 @@ class ImageWidget(QWidget):
             text = pytesseract.image_to_string(contourImage)
 
             if text: 
-                print(text)
-                rect = QRect(x, y, w, h)
-                # move center
-                # scale
-                # self.contours.append((rect, text))
+                rect = self.imageRectToDisplayRect(QRect(x + imageRect.x(), y + imageRect.y(), w, h))
+                self.contours.append((rect, text))
+        QApplication.restoreOverrideCursor()
         
 
 if __name__ == '__main__':

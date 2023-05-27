@@ -9,8 +9,11 @@
 - [x] Scan Mode
   - [x] Drag-select portion of image to scan
   - [x] Convert text in selection box to strings
-  - [ ] Highlight converted strings in image
-  - [ ] Maintain highlights through panning, zooming, rotating
+  - [x] Highlight converted strings in image
+  - [ ] Maintain highlights through:
+    - [ ] panning
+    - [ ] zooming
+    - [ ] rotating
 
 # Database:
 - [ ] Set up database (external)
