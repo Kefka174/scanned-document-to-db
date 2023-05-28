@@ -3,7 +3,7 @@
   - [ ] Select file in explorer
 - [x] Rotate image
 - [x] Zoom in on image
-  - [ ] Focus zoom on cursor
+  - [x] Focus zoom on cursor
 - [x] Pan view
   - [ ] Limit pan to image borders
 - [x] Scan Mode

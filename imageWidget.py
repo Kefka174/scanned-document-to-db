@@ -18,7 +18,7 @@ class ImageWidget(QWidget):
         self.pixmap = QPixmap(self.filePath)
         self.zoomDegree = 100
         self.contours = []
-        self.startSelect, self.endSelect, self.viewCenter, self.oldViewCenter = QPoint(), QPoint(), QPoint(), QPoint()
+        self.startSelect, self.endSelect, self.viewTopLeft, self.oldViewTopLeft = QPoint(), QPoint(), QPoint(), QPoint()
 
         rotateButton = QPushButton("Rotate", self)
         rotateButton.clicked.connect(self.rotateImage)
@@ -37,13 +37,13 @@ class ImageWidget(QWidget):
         painter = QPainter(self)
         self.displayPixmap = self.pixmap.scaled(self.size() * (100 / self.zoomDegree), Qt.KeepAspectRatio)
         centeredRect = self.displayPixmap.rect()
-        centeredRect.moveCenter(self.rect().center() + self.viewCenter)
+        centeredRect.moveCenter(self.rect().center() + self.viewTopLeft)
         painter.drawPixmap(centeredRect.topLeft(), self.displayPixmap)
 
         if self.startSelect != self.endSelect:
             if self.mode == "scan": painter.drawRect(QRect(self.startSelect, self.endSelect).normalized())
             elif self.mode == "panview": 
-                self.viewCenter = self.oldViewCenter + QPoint(self.endSelect - self.startSelect)
+                self.viewTopLeft = self.oldViewTopLeft + QPoint(self.endSelect - self.startSelect)
         if self.contours:
             for contourRect, text in self.contours:
                 painter.setPen(QPen(QColor("lightgreen"), 3))
@@ -69,16 +69,22 @@ class ImageWidget(QWidget):
                 self.scan(displayRect)
             if self.mode == "panview":
                 QApplication.restoreOverrideCursor()
-                self.oldViewCenter = self.viewCenter
+                self.oldViewTopLeft = self.viewTopLeft
 
             self.startSelect, self.endSelect = QPoint(), QPoint()
             self.setModePanView()
             self.update()
 
     def wheelEvent(self, event):
-        degree = 1
-        if event.angleDelta().y() > 0 and self.zoomDegree > 15: self.zoomDegree -= degree
-        elif event.angleDelta().y() < 0 and self.zoomDegree + degree <= 100: self.zoomDegree += degree
+        oldZoomDegree = self.zoomDegree
+        # Scale
+        degreeChange = 1
+        if event.angleDelta().y() > 0 and self.zoomDegree > 15: self.zoomDegree -= degreeChange
+        elif event.angleDelta().y() < 0 and self.zoomDegree + degreeChange <= 100: self.zoomDegree += degreeChange
+        # Center on cursor
+        self.viewTopLeft += (self.rect().center() + self.viewTopLeft - event.pos()) * (oldZoomDegree / self.zoomDegree - 1)
+        self.oldViewTopLeft = self.viewTopLeft
+
         self.update()
     
     def rotateImage(self):
@@ -89,6 +95,7 @@ class ImageWidget(QWidget):
         self.update()
 
     def setModeScan(self):
+        self.contours.clear()
         self.mode = "scan"
         self.setCursor(Qt.CursorShape.CrossCursor)
 
@@ -98,18 +105,18 @@ class ImageWidget(QWidget):
 
     def displayRectToImageRect(self, displayRect):
         imageRect = QRect(displayRect)
-        # descale
+        # Descale
         imageRect.setHeight(int(imageRect.height() * self.pixmap.height() / self.displayPixmap.height()))
         imageRect.setWidth(int(imageRect.width() * self.pixmap.width() / self.displayPixmap.width()))
-        # de-center
-        displayRectDistanceToCenterHeight = displayRect.top() - (self.rect().center().y() + self.viewCenter.y())
+        # De-center
+        displayRectDistanceToCenterHeight = displayRect.top() - (self.rect().center().y() + self.viewTopLeft.y())
         imageRectDistanceToCenterHeight = displayRectDistanceToCenterHeight * self.pixmap.height() / self.displayPixmap.height()
         imageRect.moveTop(int(self.pixmap.rect().center().y() + imageRectDistanceToCenterHeight))
 
-        displayRectDistanceToCenterWidth = displayRect.left() - (self.rect().center().x() + self.viewCenter.x())
+        displayRectDistanceToCenterWidth = displayRect.left() - (self.rect().center().x() + self.viewTopLeft.x())
         imageRectDistanceToCenterWidth = displayRectDistanceToCenterWidth * self.pixmap.width() / self.displayPixmap.width()
         imageRect.moveLeft(int(self.pixmap.rect().center().x() + imageRectDistanceToCenterWidth))
-        # cut off out-of-bounds part of rect
+        # Cut off out-of-bounds part of rect
         if imageRect.left() < 0: imageRect.setLeft(0)
         if imageRect.top() < 0: imageRect.setTop(0)
         if imageRect.bottom() > self.pixmap.height(): imageRect.setBottom(self.pixmap.height())
@@ -118,17 +125,17 @@ class ImageWidget(QWidget):
     
     def imageRectToDisplayRect(self, imageRect):
         displayRect = QRect(imageRect)
-        # scale
+        # Scale
         displayRect.setHeight(int(displayRect.height() * self.displayPixmap.height() / self.pixmap.height()))
         displayRect.setWidth(int(displayRect.width() * self.displayPixmap.width() / self.pixmap.width()))
-        # re-center
+        # Re-center
         imageRectDistanceToCenterHeight = imageRect.top() - self.pixmap.rect().center().y()
         displayRectDistanceToCenterHeight = imageRectDistanceToCenterHeight * self.displayPixmap.height() / self.pixmap.height()
-        displayRect.moveTop(int(self.rect().center().y() + self.viewCenter.y() + displayRectDistanceToCenterHeight))
+        displayRect.moveTop(int(self.rect().center().y() + self.viewTopLeft.y() + displayRectDistanceToCenterHeight))
 
         imageRectDistanceToCenterWidth = imageRect.left() - self.pixmap.rect().center().x()
         displayRectDistanceToCenterWidth = imageRectDistanceToCenterWidth * self.displayPixmap.width() / self.pixmap.width()
-        displayRect.moveLeft(int(self.rect().center().x() + self.viewCenter.x() + displayRectDistanceToCenterWidth))
+        displayRect.moveLeft(int(self.rect().center().x() + self.viewTopLeft.x() + displayRectDistanceToCenterWidth))
         return displayRect
 
     def scan(self, displayRect):
@@ -139,7 +146,7 @@ class ImageWidget(QWidget):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
-            # convert contour to text
+            # Convert contour to text
             contourImage = cv2.copyMakeBorder(scanImage[y:y + h, x:x + w], h, h, w, w, cv2.BORDER_REPLICATE)
             text = pytesseract.image_to_string(contourImage)
 
