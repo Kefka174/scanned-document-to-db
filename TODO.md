@@ -2,6 +2,7 @@
 - [x] Load and display image
   - [ ] Select file in explorer
 - [x] Rotate image
+  - [ ] Rotate relative to center view
 - [x] Zoom in on image
   - [x] Focus zoom on cursor
 - [x] Pan view
@@ -11,7 +12,7 @@
   - [x] Convert text in selection box to strings
   - [x] Highlight converted strings in image
   - [ ] Maintain highlights through:
-    - [ ] panning
+    - [x] panning
     - [ ] zooming
     - [ ] rotating
 

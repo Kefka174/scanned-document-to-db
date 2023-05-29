@@ -30,7 +30,7 @@ class ImageWidget(QWidget):
     def cvInit(self):
         self.cvOriginal = cv2.imread(self.filePath, cv2.IMREAD_GRAYSCALE | cv2.IMREAD_IGNORE_ORIENTATION)
         ret, thresh1 = cv2.threshold(self.cvOriginal, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-        rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 5))
+        rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 5)) # calibrated with one document, may not be universal
         self.cvDilated = cv2.dilate(thresh1, rect_kernel, iterations = 1)
 
     def paintEvent(self, event):
@@ -47,7 +47,8 @@ class ImageWidget(QWidget):
         if self.contours:
             for contourRect, text in self.contours:
                 painter.setPen(QPen(QColor("lightgreen"), 3))
-                painter.drawRect(contourRect)
+                if self.mode == "panview": painter.drawRect(contourRect.translated(self.endSelect - self.startSelect))
+                else: painter.drawRect(contourRect)
 
     def mousePressEvent(self, event):
         if event.buttons() & Qt.LeftButton:
@@ -68,6 +69,7 @@ class ImageWidget(QWidget):
                 displayRect = QRect(self.startSelect, self.endSelect).normalized()
                 self.scan(displayRect)
             if self.mode == "panview":
+                for contourRect, text in self.contours: contourRect.translate(self.endSelect - self.startSelect)
                 QApplication.restoreOverrideCursor()
                 self.oldViewTopLeft = self.viewTopLeft
 
@@ -77,14 +79,15 @@ class ImageWidget(QWidget):
 
     def wheelEvent(self, event):
         oldZoomDegree = self.zoomDegree
-        # Scale
+        # Scale document
         degreeChange = 1
         if event.angleDelta().y() > 0 and self.zoomDegree > 15: self.zoomDegree -= degreeChange
         elif event.angleDelta().y() < 0 and self.zoomDegree + degreeChange <= 100: self.zoomDegree += degreeChange
-        # Center on cursor
+        # Center view on cursor
         self.viewTopLeft += (self.rect().center() + self.viewTopLeft - event.pos()) * (oldZoomDegree / self.zoomDegree - 1)
         self.oldViewTopLeft = self.viewTopLeft
 
+        self.contours.clear()
         self.update()
     
     def rotateImage(self):
@@ -92,6 +95,7 @@ class ImageWidget(QWidget):
         self.cvDilated = cv2.rotate(self.cvDilated, cv2.ROTATE_90_CLOCKWISE)
         transform = QTransform().rotate(90)
         self.pixmap = self.pixmap.transformed(transform)
+        self.contours.clear()
         self.update()
 
     def setModeScan(self):
