@@ -2,9 +2,9 @@ from PyQt5.QtWidgets import QApplication, QFormLayout, QWidget, QGroupBox, QLabe
 import sys
 
 class TableWidget(QWidget):
-    def __init__(self, table, fields):
+    def __init__(self, tableName, fields):
         super().__init__()
-        groupBox = QGroupBox(table, self)
+        groupBox = QGroupBox(tableName, self)
         tableLayout = QFormLayout(self)
         groupBox.setLayout(tableLayout)
         self.fields = []

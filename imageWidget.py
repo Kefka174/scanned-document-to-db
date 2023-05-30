@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtCore import Qt, QPoint, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QTransform, QPen, QColor
+from contourWidget import ContourWidget
 import pytesseract
 import cv2
 import sys
@@ -44,11 +45,10 @@ class ImageWidget(QWidget):
             if self.mode == "scan": painter.drawRect(QRect(self.startSelect, self.endSelect).normalized())
             elif self.mode == "panview": 
                 self.viewTopLeft = self.oldViewTopLeft + QPoint(self.endSelect - self.startSelect)
-        if self.contours:
-            for contourRect, text in self.contours:
-                painter.setPen(QPen(QColor("lightgreen"), 3))
-                if self.mode == "panview": painter.drawRect(contourRect.translated(self.endSelect - self.startSelect))
-                else: painter.drawRect(contourRect)
+        for contour in self.contours:
+            painter.setPen(QPen(QColor("lightgreen"), 3))
+            if self.mode == "panview": painter.drawRect(contour.geometry().translated(self.endSelect - self.startSelect))
+            else: painter.drawRect(contour.geometry())
 
     def mousePressEvent(self, event):
         if event.buttons() & Qt.LeftButton:
@@ -69,7 +69,7 @@ class ImageWidget(QWidget):
                 displayRect = QRect(self.startSelect, self.endSelect).normalized()
                 self.scan(displayRect)
             if self.mode == "panview":
-                for contourRect, text in self.contours: contourRect.translate(self.endSelect - self.startSelect)
+                for contour in self.contours: contour.move(contour.pos() + self.endSelect - self.startSelect)
                 QApplication.restoreOverrideCursor()
                 self.oldViewTopLeft = self.viewTopLeft
 
@@ -87,7 +87,7 @@ class ImageWidget(QWidget):
         self.viewTopLeft += (self.rect().center() + self.viewTopLeft - event.pos()) * (oldZoomDegree / self.zoomDegree - 1)
         self.oldViewTopLeft = self.viewTopLeft
 
-        self.contours.clear()
+        self.clearContours()
         self.update()
     
     def rotateImage(self):
@@ -95,17 +95,21 @@ class ImageWidget(QWidget):
         self.cvDilated = cv2.rotate(self.cvDilated, cv2.ROTATE_90_CLOCKWISE)
         transform = QTransform().rotate(90)
         self.pixmap = self.pixmap.transformed(transform)
-        self.contours.clear()
+        self.clearContours()
         self.update()
 
     def setModeScan(self):
-        self.contours.clear()
+        self.clearContours()
         self.mode = "scan"
         self.setCursor(Qt.CursorShape.CrossCursor)
 
     def setModePanView(self):
         self.mode = "panview"
         self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def clearContours(self):
+        for contour in self.contours: contour.deleteLater()
+        self.contours.clear()
 
     def displayRectToImageRect(self, displayRect):
         imageRect = QRect(displayRect)
@@ -156,7 +160,10 @@ class ImageWidget(QWidget):
 
             if text: 
                 rect = self.imageRectToDisplayRect(QRect(x + imageRect.x(), y + imageRect.y(), w, h))
-                self.contours.append((rect, text))
+                contour = ContourWidget(self, rect, text)
+                contour.show()
+                self.contours.append(contour)
+                self.repaint(displayRect) # force paint the new contour
         QApplication.restoreOverrideCursor()
         
 
