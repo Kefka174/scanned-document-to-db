@@ -8,9 +8,10 @@ class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow,self).__init__()
         self.setMinimumSize(1000, 800)
-        self.setWindowTitle("Test Window")
+        self.setWindowTitle("Scanned Document to Database")
+        self.tableWidgets = []
 
-        imageWidget = ImageWidget("testImages/Image.jpg")
+        imageWidget = ImageWidget("testImages/Image.jpg", self.setTextAtFocusedField)
         self.setCentralWidget(imageWidget)
 
         dock = QDockWidget("Tables", self)
@@ -21,15 +22,28 @@ class MyWindow(QMainWindow):
         dockWidget = QWidget(dock)
         dock.setWidget(dockWidget)
         dockLayout = QVBoxLayout(dockWidget)
-        dockLayout.addWidget(TableWidget("Race", ["Year", "Series", "Class"]))
-        dockLayout.addWidget(TableWidget("Results", ["Placement", "Trophy"]))
-        dockLayout.addWidget(TableWidget("Sailor", ["Name", "Boat"]))
-        dockLayout.addWidget(QPushButton("Insert in Database"))
-        
+        self.tableWidgets.append(TableWidget("Race", ["Year", "Series", "Class"]))
+        self.tableWidgets.append(TableWidget("Results", ["Placement", "Trophy"]))
+        self.tableWidgets.append(TableWidget("Sailor", ["Name", "Boat"]))
+        for tw in self.tableWidgets: dockLayout.addWidget(tw)
+        insertButton = QPushButton("Insert in Database")
+        insertButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        insertButton.clicked.connect(self.insertInDB)
+        dockLayout.addWidget(insertButton)
 
+        self.tableWidgets[0].setFocus()
         dockWidget.setFixedSize(dockLayout.sizeHint())
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
 
+    def setTextAtFocusedField(self, text):
+        if self.focusWidget().text(): self.focusWidget().setText(self.focusWidget().text() + ' ' + text)
+        else: self.focusWidget().setText(text)
+
+    def insertInDB(self):
+        for table in self.tableWidgets:
+            print(table.objectName())
+            for field in table.fields:
+                print(f"\t{field.objectName()}: {field.text()}")
 
 
 

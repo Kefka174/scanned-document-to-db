@@ -3,14 +3,15 @@ from PyQt5.QtCore import Qt, QRect
 import sys
 
 class ContourWidget(QLabel):
-    def __init__(self, parent, geometryRect, text):
+    def __init__(self, parent, geometryRect, text, clickFunction):
         super().__init__(parent)
         self.text = text
+        self.clickFunction = clickFunction
         self.setGeometry(geometryRect)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def mousePressEvent(self, event):
-        print(self.text)
+        self.clickFunction(self.text)
 
     
 

@@ -1,4 +1,4 @@
-# Image Recogniton:
+# Image Recogniton / GUI:
 - [x] Load and display image
   - [ ] Select file in explorer
 - [x] Rotate image
@@ -15,13 +15,16 @@
     - [x] panning
     - [ ] zooming
     - [ ] rotating
+- [ ] Rotate and Scan Buttons recenter on window-size change
+- [ ] "Ctrl+ / Ctrl-" Resize button and field text
 
 # Database:
 - [ ] Set up database (external)
 - [x] GUI panel to manage schema
   - [ ] Dynamically generate table widgets
     - [ ] Order based on foreign keys
-  - [x] Dynamically generate feild widgets
+  - [x] Dynamically generate field widgets
+    - [ ] Autosize and left-align fields
   - [ ] Dock panel to top or bottom of main window
 - [x] Clear table, not clear all tables
 - [ ] Create schema
@@ -32,8 +35,8 @@
   - [ ] Designate autoID
   - [ ] Save schema
 - [ ] Load preset schema
-- [ ] Click image highlights to fill in fields
-  - [ ] Can manually edit field imput data
+- [x] Click image highlights to fill in fields
+  - [x] Can manually edit field imput data
   - [ ] Drop-down for existing field value
 - [ ] Add entry to database
   - [ ] Required fields filled

@@ -7,9 +7,11 @@ import cv2
 import sys
 
 class ImageWidget(QWidget):
-    def __init__(self, filePath):
+    def __init__(self, filePath, textClickFunction = print):
         super().__init__()
         self.filePath = filePath
+        self.textClickFunction = textClickFunction
+        self.contourBorderSize = 3
         self.guiInit()
         self.cvInit()
 
@@ -22,11 +24,13 @@ class ImageWidget(QWidget):
         self.startSelect, self.endSelect, self.viewTopLeft, self.oldViewTopLeft = QPoint(), QPoint(), QPoint(), QPoint()
 
         rotateButton = QPushButton("Rotate", self)
-        rotateButton.clicked.connect(self.rotateImage)
+        rotateButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         rotateButton.setGeometry(self.rect().center().x() - (rotateButton.width() // 2), 10, 75, 40)
+        rotateButton.clicked.connect(self.rotateImage)
         modeButton = QPushButton("Scan", self)
-        modeButton.clicked.connect(self.setModeScan)
+        modeButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         modeButton.setGeometry(self.rect().center().x() + (modeButton.width() // 2), 10, 75, 40)
+        modeButton.clicked.connect(self.setModeScan)
 
     def cvInit(self):
         self.cvOriginal = cv2.imread(self.filePath, cv2.IMREAD_GRAYSCALE | cv2.IMREAD_IGNORE_ORIENTATION)
@@ -46,7 +50,7 @@ class ImageWidget(QWidget):
             elif self.mode == "panview": 
                 self.viewTopLeft = self.oldViewTopLeft + QPoint(self.endSelect - self.startSelect)
         for contour in self.contours:
-            painter.setPen(QPen(QColor("lightgreen"), 3))
+            painter.setPen(QPen(QColor("lightgreen"), self.contourBorderSize))
             if self.mode == "panview": painter.drawRect(contour.geometry().translated(self.endSelect - self.startSelect))
             else: painter.drawRect(contour.geometry())
 
@@ -156,14 +160,15 @@ class ImageWidget(QWidget):
             x, y, w, h = cv2.boundingRect(contour)
             # Convert contour to text
             contourImage = cv2.copyMakeBorder(scanImage[y:y + h, x:x + w], h, h, w, w, cv2.BORDER_REPLICATE)
-            text = pytesseract.image_to_string(contourImage)
+            text = pytesseract.image_to_string(contourImage).strip()
 
             if text: 
                 rect = self.imageRectToDisplayRect(QRect(x + imageRect.x(), y + imageRect.y(), w, h))
-                contour = ContourWidget(self, rect, text)
+                contour = ContourWidget(self, rect, text, self.textClickFunction)
                 contour.show()
                 self.contours.append(contour)
-                self.repaint(displayRect) # force paint the new contour
+                # force paint the new contour
+                self.repaint(rect.adjusted(-self.contourBorderSize,-self.contourBorderSize,self.contourBorderSize,self.contourBorderSize))
         QApplication.restoreOverrideCursor()
         
 
