@@ -40,10 +40,14 @@ class MyWindow(QMainWindow):
         else: self.focusWidget().setText(text)
 
     def insertInDB(self):
+        tableDict = {}
         for table in self.tableWidgets:
-            print(table.objectName())
+            fieldDict = {}
             for field in table.fields:
-                print(f"\t{field.objectName()}: {field.text()}")
+                if field.text(): fieldDict[field.objectName()] = field.text()
+            if fieldDict: tableDict[table.objectName()] = fieldDict
+        print(tableDict)
+        
 
 
 

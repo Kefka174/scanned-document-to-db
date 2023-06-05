@@ -19,22 +19,19 @@
 - [ ] "Ctrl+ / Ctrl-" Resize button and field text
 
 # Database:
-- [ ] Set up database (external)
+- [x] Set up database (external)
+- [x] Set up database connector
+- [ ] GUI panel to connect to database
+  - [ ] Dynamically generate connection config fields
+- [ ] Display database errors in GUI
 - [x] GUI panel to manage schema
   - [ ] Dynamically generate table widgets
     - [ ] Order based on foreign keys
+    - [ ] Close out unwanted tables
   - [x] Dynamically generate field widgets
     - [ ] Autosize and left-align fields
   - [ ] Dock panel to top or bottom of main window
 - [x] Clear table, not clear all tables
-- [ ] Create schema
-  - [ ] Make table
-  - [ ] Add fields
-  - [ ] Designate required fields
-  - [ ] Designate foreign keys
-  - [ ] Designate autoID
-  - [ ] Save schema
-- [ ] Load preset schema
 - [x] Click image highlights to fill in fields
   - [x] Can manually edit field imput data
   - [ ] Drop-down for existing field value
@@ -59,7 +56,12 @@
 - ***Placement***
 - Trophy (optional)
 
+### Sailors
+- ID
+- ***First Name***
+- ***Last Name***
+
 ### Sailor Participation
 - **ResultID**
-- **Name**
-- Boat
+- **SailorID**
+- Boat (optional)
